@@ -1,0 +1,20 @@
+{
+  "name": "PixelPXLFrame",
+  "description": "The PXLFrame library for STM32 part of Pixel project",
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/starfactorypixel/Library_PXLFrame.git"
+  },
+  "headers": [
+    "FrameBuffer.h",
+    "FrameManager.h",
+    "PXLParser.h"
+  ],
+  "dependencies": [
+    {
+      "name": "CUtils",
+      "version": "https://github.com/starfactorypixel/Library_CUtils"
+    }
+  ]
+}
