@@ -28,6 +28,10 @@ class PXLReaderUART : public PXLReaderInterface
 			{
 				return 0;
 			}
+
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    DWT->CYCCNT = 0;
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 			
 			return -1;
 		}
@@ -119,12 +123,81 @@ class PXLReaderUART : public PXLReaderInterface
 			
 			_HW_Print(_buffer_tx, buffer_tx_length);
 		}
-
+		
+		HAL_StatusTypeDef UART_Receive_WithIdle(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size, uint16_t *pRxLen, uint32_t timeout_ms)
+		{
+			uint32_t start_ms = HAL_GetTick();
+			uint32_t last_rx_cycles;
+			uint16_t count = 0;
+			const uint32_t idle_cycles = (SystemCoreClock / 1000000UL) * 1000UL; // 1 ms @ CPU freq
+			
+			*pRxLen = 0;
+			
+			// очистка возможных старых ошибок
+			__HAL_UART_CLEAR_OREFLAG(huart);
+			__HAL_UART_CLEAR_FEFLAG(huart);
+			__HAL_UART_CLEAR_NEFLAG(huart);
+			
+			// ожидание первого байта
+			while(__HAL_UART_GET_FLAG(huart, UART_FLAG_RXNE) == RESET)
+			{
+				if((HAL_GetTick() - start_ms) >= timeout_ms)
+					return HAL_TIMEOUT;
+				
+				// если зашёл ORE ещё до первого байта
+				if(__HAL_UART_GET_FLAG(huart, UART_FLAG_ORE))
+				{
+					__HAL_UART_CLEAR_OREFLAG(huart);
+					if (count < Size)
+						pData[count++] = 0x00;	//RX_LOST_BYTE
+					}
+			}
+				
+			// первый байт
+			pData[count++] = (uint8_t)huart->Instance->DR;
+			last_rx_cycles = DWT->CYCCNT;
+			
+			// остальные байты
+			while(count < Size)
+			{
+				// потерянный байт (ORE)
+				if(__HAL_UART_GET_FLAG(huart, UART_FLAG_ORE))
+				{
+					__HAL_UART_CLEAR_OREFLAG(huart);
+					
+					if(count < Size)
+						pData[count++] = 0x00;	//RX_LOST_BYTE
+					
+					last_rx_cycles = DWT->CYCCNT;
+					
+					continue;
+				}
+				
+				// нормальный байт
+				if(__HAL_UART_GET_FLAG(huart, UART_FLAG_RXNE))
+				{
+					pData[count++] = (uint8_t)huart->Instance->DR;
+					last_rx_cycles = DWT->CYCCNT;
+					
+					continue;
+				}
+				
+				// software IDLE
+				if((uint32_t)(DWT->CYCCNT - last_rx_cycles) >= idle_cycles)
+					break;
+			}
+			
+			*pRxLen = count;
+			
+			return HAL_OK;
+		}
+		
 		bool _WaitResponse(char id, uint32_t timeout = 64)
 		{
 			uint16_t rx_len;
 			NVIC_DisableIRQ(CAN1_RX1_IRQn);
-			HAL_StatusTypeDef result = HAL_UARTEx_ReceiveToIdle(&hDebugUart, _buffer_rx, sizeof(_buffer_rx), &rx_len, timeout);
+			//HAL_StatusTypeDef result = HAL_UARTEx_ReceiveToIdle(&hDebugUart, _buffer_rx, sizeof(_buffer_rx), &rx_len, timeout);
+			HAL_StatusTypeDef result = UART_Receive_WithIdle(&hDebugUart, _buffer_rx, sizeof(_buffer_rx), &rx_len, timeout);
 			NVIC_EnableIRQ(CAN1_RX1_IRQn);
 			if(result == HAL_OK)
 			{
