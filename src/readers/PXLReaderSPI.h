@@ -60,7 +60,7 @@ class PXLReaderSPI : public PXLReaderInterface
 			uint16_t readable_length = _active_file->spi_length - offset;
 			uint16_t bytes_to_read = (length > readable_length) ? readable_length : length;
 
-			SPI::flash.ReadBytes( (_active_file->spi_start + offset), bytes_to_read, _buffer );
+			SPI::flash.ReadBytes( (_active_file->spi_start + offset), _buffer, bytes_to_read);
 		
 			return bytes_to_read;
 		}
