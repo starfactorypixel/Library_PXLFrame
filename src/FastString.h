@@ -1,5 +1,8 @@
 #pragma once
 #include <inttypes.h>
+
+#ifdef STM32F1
+
 #include "stm32f1xx_hal.h"
 
 DMA_Channel_TypeDef *DMA_Channel = DMA1_Channel7;
@@ -148,11 +151,47 @@ void memcpy_dma32(uint8_t *dst, const uint8_t *src, size_t size)
 	return;
 }
 
+#endif
+
+#ifdef STM32H7
+
+#include <string.h>
+#include "stm32h7xx_hal.h"
+
+void memset_dma8(uint8_t *dst, uint8_t c, size_t size)
+{
+	memset(dst, c, size);
+}
+
+void memset_dma32(uint8_t *dst, uint32_t c, size_t size)
+{
+	if(size % 4 != 0)
+		size += 4 - (size % 4);
+	
+	memset(dst, c, size);
+}
+
+void memcpy_dma8(uint8_t *dst, const uint8_t *src, size_t size)
+{
+	memcpy(dst, src, size);
+}
+
+void memcpy_dma32(uint8_t *dst, const uint8_t *src, size_t size)
+{
+	if(size % 4 != 0)
+		size += 4 - (size % 4);
+	
+	memcpy(dst, src, size);
+}
+
+#endif
+
 void memcpy_repeat_fast(uint8_t *dest, const uint8_t *src, size_t elem_size, size_t count)
 {
-	memcpy(dest, src, elem_size);
-
+	if(count == 0) return;
+	
 	size_t total_copied = 1;
+	memcpy(dest, src, elem_size);
 	while(total_copied < count)
 	{
 		size_t copy_now = (count - total_copied) < total_copied ? (count - total_copied) : total_copied;
