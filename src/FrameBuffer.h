@@ -26,7 +26,7 @@ class FrameBuffer
 				uint8_t raw[(DISPLAY_WIDTH * DISPLAY_HEIGHT * sizeof(color_t))];
 
 				// Массив пикселей кадрового буфера
-				color_t pixel[(DISPLAY_WIDTH * DISPLAY_HEIGHT)];
+				color_t pixels[(DISPLAY_WIDTH * DISPLAY_HEIGHT)];
 			};
 		};
 		
@@ -90,7 +90,7 @@ class FrameBuffer
 			uint8_t scale_g = (_corr_greed * _brightness) / 255;
 			uint8_t scale_b = (_corr_blue * _brightness) / 255;
 			
-			for(color_t &pixel : frame_buffer.pixel)
+			for(color_t &pixel : frame_buffer.pixels)
 			{
 				AdjustBrightness(pixel, scale_r, scale_g, scale_b);
 			}
@@ -100,11 +100,11 @@ class FrameBuffer
 		
 		void GetPixel(uint16_t idx, color_t &pixel, bool clear)
 		{
-			if(idx >= sizeofarray(frame_buffer.pixel)) return;
+			if(idx >= sizeofarray(frame_buffer.pixels)) return;
 
-			pixel = frame_buffer.pixel[idx];
+			pixel = frame_buffer.pixels[idx];
 			if(clear == true)
-				frame_buffer.pixel[idx] = color_black;
+				frame_buffer.pixels[idx] = color_black;
 			
 			return;
 		}
@@ -114,18 +114,18 @@ class FrameBuffer
 			if(x >= frame_width || y >= frame_height) return;
 
 			uint16_t idx = x + (y * frame_width);
-			pixel = frame_buffer.pixel[idx];
+			pixel = frame_buffer.pixels[idx];
 			if(clear == true)
-				frame_buffer.pixel[idx] = color_black;
+				frame_buffer.pixels[idx] = color_black;
 			
 			return;
 		}
 
 		void SetPixel(uint16_t idx, const color_t &pixel)
 		{
-			if(idx >= sizeofarray(frame_buffer.pixel)) return;
+			if(idx >= sizeofarray(frame_buffer.pixels)) return;
 
-			frame_buffer.pixel[idx] = pixel;
+			frame_buffer.pixels[idx] = pixel;
 
 			return;
 		}
@@ -135,16 +135,16 @@ class FrameBuffer
 			if(x >= frame_width || y >= frame_height) return;
 			
 			uint16_t idx = x + (y * frame_width);
-			frame_buffer.pixel[idx] = pixel;
+			frame_buffer.pixels[idx] = pixel;
 			
 			return;
 		}
 		
 		void SetPixel(uint16_t idx, const color_t &pixel, uint16_t count)
 		{
-			if(idx + count >= sizeofarray(frame_buffer.pixel)) return;
+			if(idx + count >= sizeofarray(frame_buffer.pixels)) return;
 			
-			memcpy_repeat_fast( (uint8_t *)&frame_buffer.pixel[idx], (uint8_t *)&pixel, sizeof(pixel), count );
+			memcpy_repeat_fast( (uint8_t *)&frame_buffer.pixels[idx], (uint8_t *)&pixel, sizeof(pixel), count );
 			
 			return;
 		}
