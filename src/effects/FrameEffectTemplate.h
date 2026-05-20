@@ -7,8 +7,8 @@
 	frame_width - Ширина кадра
 	frame_height - Высота кадра
 	Init() - Вызывается при инициализации эффекта
-	Tick() - Вызывается не менее чем каждые 1 мс
-	Render() - Вызывается каждые 100 мс
+	Tick() - Вызывается не менее чем каждые 5 мс
+	FramePrepare() - Вызывается каждые 100 мс
 */
 
 class FrameEffectTemplate : public FrameEffectInterface
