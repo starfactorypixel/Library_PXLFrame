@@ -75,11 +75,7 @@ class FrameEffectGameOfLife : public FrameEffectInterface
 				for(uint8_t x = 0; x < frame_width; x++)
 				{
 					index_2d = x + (y * frame_width);
-					
-					if(_getBit(_current_generation, index_2d))
-						color = {0x00, 0x10, 0x00};
-					else
-						color = {0x00, 0x00, 0x00};
+					color = (_getBit(_current_generation, index_2d)) ? _color_green : _color_black;
 					
 					frame_buffer->SetPixel(index_2d, color);
 				}
@@ -133,5 +129,8 @@ class FrameEffectGameOfLife : public FrameEffectInterface
 		
 		uint8_t _current_generation[ (frame_width * frame_height + 7) / 8 ] = {0};
 		uint8_t _next_generation[ (frame_width * frame_height + 7) / 8 ] = {0};
-		
+
+		color_t _color_black = {0x00, 0x00, 0x00};
+		color_t _color_green = {0x00, 0xFF, 0x00};
+
 };
