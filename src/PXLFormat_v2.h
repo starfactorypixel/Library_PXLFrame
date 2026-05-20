@@ -310,7 +310,7 @@ inline uint8_t parser_rgb5_pack(const uint8_t *input, pxl_pixel_t &curr)
 		else
 		{
 			curr.index += count;
-			curr.color[3] = 0x00;		// Делаем 100% прозрачности но сам пиксель сохраняет цвет
+			*(uint32_t *)curr.color = 0x00000000;
 		}
 		
 		return 1;
