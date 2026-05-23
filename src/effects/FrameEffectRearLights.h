@@ -15,6 +15,10 @@
 */
 
 //template <uint8_t _max_layers> 
+
+extern SD_HandleTypeDef hsd1;
+
+
 class FrameEffectRearLights : public FrameEffectInterface
 {
 	static constexpr	uint8_t _max_layers = 8;
@@ -42,7 +46,7 @@ class FrameEffectRearLights : public FrameEffectInterface
 		{
 			uint32_t time1 = HAL_GetTick();
 			_Render(time);
-			DEBUG_LOG_TOPIC("FramePrepare", "time: %d\n", (HAL_GetTick() - time1));
+			DEBUG_LOG_TOPIC("FramePrepare", "time: %d, code: %d\n", (HAL_GetTick() - time1), HAL_SD_GetError(&hsd1));
 			
 			return true;
 		}
