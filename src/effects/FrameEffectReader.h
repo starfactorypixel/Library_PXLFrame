@@ -27,16 +27,16 @@ class FrameEffectReader : public FrameEffectInterface
 
 /*
 			// PXLReaderArray
-			reader.PutFileMap( {"dragon.pxl", dragon, sizeof(dragon)} );
-			reader.PutFileMap( {"test.pxl", test, sizeof(test)} );
+			reader.SetMap( {"dragon.pxl", dragon, sizeof(dragon)} );
+			reader.SetMap( {"test.pxl", test, sizeof(test)} );
 */
 /*
 			// PXLReaderSPI
-			reader.PutFileMap( {"dragon1.pxl", 0x001000, 40754UL} );
-			reader.PutFileMap( {"dragon2.pxl", 0x00B000, 42975UL} );
-			reader.PutFileMap( {"dragon3.pxl", 0x020000, 40754UL} );
-			reader.PutFileMap( {"dragon4.pxl", 0x030000, 38444UL} );
-			reader.PutFileMap( {"dragon5.pxl", 0x03A000, 27714UL} );
+			reader.SetMap( {"dragon1.pxl", 0x001000, 40754UL} );
+			reader.SetMap( {"dragon2.pxl", 0x00B000, 42975UL} );
+			reader.SetMap( {"dragon3.pxl", 0x020000, 40754UL} );
+			reader.SetMap( {"dragon4.pxl", 0x030000, 38444UL} );
+			reader.SetMap( {"dragon5.pxl", 0x03A000, 27714UL} );
 */
 			
 			pxl.SetIgnoreFrameTimeout(true);
