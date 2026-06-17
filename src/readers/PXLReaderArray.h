@@ -6,7 +6,6 @@ class PXLReaderArray : public PXLReaderInterface
 {
 	struct file_map_t
 	{
-		const char *filename;			// Имя файла, не используется
 		const uint8_t *array_ptr;		// Указатель на массив
 		uint32_t array_length;			// Размер массива
 	};
@@ -20,7 +19,7 @@ class PXLReaderArray : public PXLReaderInterface
 			return;
 		}
 		
-		virtual int8_t Open(const char *filename) override
+		virtual int8_t Open() override
 		{
 			return 0;
 		}
@@ -51,6 +50,6 @@ class PXLReaderArray : public PXLReaderInterface
 
 	private:
 		
-		file_map_t _map;
+		file_map_t _map = {};
 		const uint8_t *_file_ptr = nullptr;
 };

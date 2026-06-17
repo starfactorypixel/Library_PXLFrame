@@ -7,9 +7,16 @@ class PXLReaderFatFS : public PXLReaderInterface
 {
 	public:
 		
-		virtual int8_t Open(const char *filename) override
+		void SetFilename(const char *filename)
 		{
-			FRESULT result = f_open(&_file_obj, filename, FA_READ);
+			_filename = filename;
+
+			return;
+		}
+		
+		virtual int8_t Open() override
+		{
+			FRESULT result = f_open(&_file_obj, _filename, FA_READ);
 			_file_is_open = (result == FR_OK);
 			
 			return result;
@@ -50,6 +57,7 @@ class PXLReaderFatFS : public PXLReaderInterface
 	private:
 		
 		FIL _file_obj;
+		const char *_filename = nullptr;
 		bool _file_is_open = false;
 		
 		static uint8_t _buffer[512];

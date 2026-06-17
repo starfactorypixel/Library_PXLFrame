@@ -44,7 +44,7 @@ class FrameEffectReader : public FrameEffectInterface
 			pxl.SetReader(reader);
 			
 			//pxl.OpenFile("dragon.pxl");
-			pxl.OpenFile("dragon5.pxl");
+			//pxl.OpenFile("dragon5.pxl");
 			
 			return;
 		}

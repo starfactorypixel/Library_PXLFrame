@@ -26,6 +26,7 @@ class FrameEffectRearLights : public FrameEffectInterface
 
 		virtual void Init() override
 		{
+			/*
 			for(auto &layer : _layers)
 			{
 				layer.is_set = false;
@@ -33,6 +34,7 @@ class FrameEffectRearLights : public FrameEffectInterface
 				layer.parser.SetAutoReopen(true);
 				layer.parser.SetReader(layer.reader);
 			}
+			*/
 			
 			return;
 		}
@@ -59,9 +61,13 @@ class FrameEffectRearLights : public FrameEffectInterface
 			if(layer.is_set == true)
 			{
 				layer.parser.CloseFile();
+				layer.is_set = false;
 			}
 			
-			PXLParser::error_t code = layer.parser.OpenFile(filename);
+			layer.reader.SetFilename(filename);
+			layer.parser.SetAutoReopen(true);
+			layer.parser.SetReader(layer.reader);
+			PXLParser::error_t code = layer.parser.OpenFile();
 			if(code == PXLParser::ERROR_OK)
 			{
 				layer.is_set = true;

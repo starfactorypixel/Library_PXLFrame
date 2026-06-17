@@ -8,7 +8,6 @@ class PXLReaderSPI : public PXLReaderInterface
 	
 	struct file_map_t
 	{
-		const char *filename;			// Имя файла, не используется
 		uint32_t spi_start;				// Адрес начала файла в SPI
 		uint32_t spi_length;			// Длина файла с SPI
 	};
@@ -22,7 +21,7 @@ class PXLReaderSPI : public PXLReaderInterface
 			return;
 		}
 		
-		virtual int8_t Open(const char *filename) override
+		virtual int8_t Open() override
 		{
 			return 0;
 		}
@@ -55,6 +54,6 @@ class PXLReaderSPI : public PXLReaderInterface
 		
 	private:
 		
-		file_map_t _map;
+		file_map_t _map = {};
 		uint8_t _buffer[_buffer_size];
 };

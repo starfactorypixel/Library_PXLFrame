@@ -59,12 +59,10 @@ class PXLParser
 			return;
 		}
 		
-		error_t OpenFile(const char *filename)
+		error_t OpenFile()
 		{
-			_file.filename = filename;
-			
 			ReInit();
-			if(_reader->Open(filename) == 0)
+			if(_reader->Open() == 0)
 			{
 				if(_reader->Read(_file.offset, _file_header_size_bytes) == _file_header_size_bytes)
 				{
@@ -86,7 +84,7 @@ class PXLParser
 		error_t ReOpenFile()
 		{
 			CloseFile();
-			OpenFile(_file.filename);
+			OpenFile();
 			
 			return _error;
 		}
@@ -360,7 +358,6 @@ class PXLParser
 
 			const uint8_t *buffer_ptr = nullptr;	// Указатель на буфер
 
-			const char *filename = nullptr;			// Имя файла
 			bool isopen = false;					// Флаг открытого файла
 			uint8_t read_attempts = 0;				// Кол-во попыток чтения файла, после чего он закрывается
 		} _file;

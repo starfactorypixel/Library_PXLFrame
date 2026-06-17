@@ -19,7 +19,7 @@ class PXLReaderUART : public PXLReaderInterface
 	
 	public:
 		
-		virtual int8_t Open(const char *filename) override
+		virtual int8_t Open() override
 		{
 			//_HW_ReInit(true);
 			_SendRequest('1', 0, 0);
