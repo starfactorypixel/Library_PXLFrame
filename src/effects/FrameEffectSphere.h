@@ -13,20 +13,20 @@ class FrameEffectSphere : public FrameEffectInterface
 		{
 			for(uint8_t i = 0; i < _count; ++i)
 			{
-				balls[i].x = Random(0, 127);
-				balls[i].y = Random(0, 15);
+				balls[i].x = _Random(0, 127);
+				balls[i].y = _Random(0, 15);
 				
 				// Исключение строго вертикального и горизонтального движения
 				do
 				{
-					balls[i].vx = (Random(-2, 2));
-					balls[i].vy = (Random(-2, 2));
+					balls[i].vx = (_Random(-2, 2));
+					balls[i].vy = (_Random(-2, 2));
 				} while (balls[i].vx == 0 || balls[i].vy == 0);
 				
-				balls[i].radius = Random(1, 3);
-				balls[i].r = Random(0, 16);
-				balls[i].g = Random(0, 16);
-				balls[i].b = Random(0, 16);
+				balls[i].radius = _Random(1, 3);
+				balls[i].r = _Random(0, 16);
+				balls[i].g = _Random(0, 16);
+				balls[i].b = _Random(0, 16);
 			}
 			
 			return;
@@ -72,10 +72,10 @@ class FrameEffectSphere : public FrameEffectInterface
 				}
 				
 				if(ball->vx == 0)
-					ball->vx = Random(-2, 2);
+					ball->vx = _Random(-2, 2);
 				
 				if(ball->vy == 0)
-					ball->vy = Random(-2, 2);
+					ball->vy = _Random(-2, 2);
 			}
 			
 			render();

@@ -1,6 +1,5 @@
 #pragma once
 #include <inttypes.h>
-#include <stdlib.h>
 #include "FrameEffectInterface.h"
 
 class FrameEffectGameOfLife : public FrameEffectInterface
@@ -49,9 +48,7 @@ class FrameEffectGameOfLife : public FrameEffectInterface
 		
 		void _InitRandomGeneration(uint32_t seed)
 		{
-			_rng_state ^= seed;
-			if(_rng_state == 0)
-				_rng_state = 0x2545F491;
+			_Random(seed);
 			
 			for(uint16_t i = 0; i < frame_width * frame_height; i++)
 			{
@@ -174,16 +171,6 @@ class FrameEffectGameOfLife : public FrameEffectInterface
 			return hash;
 		}
 		
-		// xorshift32: быстрее rand() и не трогает глобальное состояние
-		uint32_t _Random()
-		{
-			_rng_state ^= _rng_state << 13;
-			_rng_state ^= _rng_state >> 17;
-			_rng_state ^= _rng_state << 5;
-			
-			return _rng_state;
-		}
-		
 		inline void _SetBit(uint8_t *buffer, uint16_t index, bool value)
 		{
 			const uint8_t mask = 1 << (index & 0x07);
@@ -214,8 +201,6 @@ class FrameEffectGameOfLife : public FrameEffectInterface
 		uint16_t _population = 0xFFFF;
 		uint16_t _population_next = 0;
 		
-		uint32_t _rng_state = 0x2545F491;
-
 		color_t _color_black = {0x00, 0x00, 0x00};
 		color_t _color_green = {0x00, 0xFF, 0x00};
 
