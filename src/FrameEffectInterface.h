@@ -29,12 +29,37 @@ class FrameEffectInterface
 		
 	protected:
 		
-		int32_t Random() { return rand(); }
-		int32_t Random(int32_t min, int32_t max) { return (rand() % (max - min + 1)) + min; }
-		float RandomFloat(){ return (float)rand() / (float)RAND_MAX; }
+		// xorshift32: быстрый генератор без глобального состояния rand().
+		// Состояние общее для всех эффектов. seed != 0 подмешивается в состояние перед шагом.
+		static uint32_t _Random(uint32_t seed = 0)
+		{
+			static constexpr uint32_t default_seed = 0x2545F491;
+			static uint32_t state = default_seed;
+			
+			state ^= seed;
+			if(state == 0)
+				state = default_seed;
+			
+			state ^= state << 13;
+			state ^= state >> 17;
+			state ^= state << 5;
+			
+			return state;
+		}
+		
+		// Случайное число в диапазоне [min, max] включительно
+		static int32_t _Random(int32_t min, int32_t max)
+		{
+			const uint32_t range = (uint32_t)max - (uint32_t)min + 1;
+			
+			if(range == 0)
+				return (int32_t)_Random();
+			
+			return (int32_t)((uint32_t)min + (uint32_t)(((uint64_t)_Random() * range) >> 32));
+		}
 		
 		// Простая 2D версия шума (упрощенная для МК)
-		uint8_t ValueNoiseInt(int32_t x, int32_t y)
+		uint8_t _ValueNoiseInt(int32_t x, int32_t y)
 		{
 			int32_t n = x + y * 57;
 			n = (n << 13) ^ n;
@@ -42,7 +67,7 @@ class FrameEffectInterface
 		}
 		
 		// Простая 2D версия шума (упрощенная для МК)
-		float ValueNoiseFloat(float x, float y)
+		float _ValueNoiseFloat(float x, float y)
 		{
 			uint32_t n = (int)x + ((int)y * 57);
 			n = (n << 13) ^ n;
