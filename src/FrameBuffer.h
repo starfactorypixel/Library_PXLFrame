@@ -142,7 +142,7 @@ class FrameBuffer
 		
 		void SetPixel(uint16_t idx, const color_t &pixel, uint16_t count)
 		{
-			if(idx + count >= sizeofarray(frame_buffer.pixels)) return;
+			if(idx + count > sizeofarray(frame_buffer.pixels)) return;
 			
 			memcpy_repeat_fast( (uint8_t *)&frame_buffer.pixels[idx], (uint8_t *)&pixel, sizeof(pixel), count );
 			
@@ -159,7 +159,7 @@ class FrameBuffer
 		
 		void Clear()
 		{
-			memset_dma32(frame_buffer.raw, 0x00000000, sizeof(frame_buffer.raw));
+			memset_dma32(frame_buffer.raw, 0x00000000, sizeof(frame_buffer));
 
 			return;
 		}

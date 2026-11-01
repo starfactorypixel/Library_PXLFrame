@@ -35,18 +35,33 @@ class FrameManager
 				_effect->Tick(time);
 			}
 			
-			if(frame_buffer->is_sending == false)
+			if(frame_buffer->is_sending == false && frame_buffer->is_ready_sending == false)
 			{
 				if(frame_buffer->is_rendered == false)
 				{
-					uint32_t time_next_frame = time + (_frame_rate - (time - last_render));
+#ifdef DEBUG_FRAME_TIME
+					static uint32_t prepare_start = 0;
+					if(prepare_start == 0)
+						prepare_start = HAL_GetTick();
+#endif
 					
-					frame_buffer->is_rendered = _effect->FramePrepare(time_next_frame);
+					frame_buffer->is_rendered = _effect->FramePrepare(last_render + _frame_rate);
+					
+#ifdef DEBUG_FRAME_TIME
+					if(frame_buffer->is_rendered == true)
+					{
+						DEBUG_LOG_TOPIC("FrameManager", "FramePrepare: %lu ms\n", (unsigned long)(HAL_GetTick() - prepare_start));
+						prepare_start = 0;
+					}
+#endif
 				}
 				
 				if(frame_buffer->is_rendered == true && time - last_render >= _frame_rate)
 				{
-					last_render = time;
+					last_render += _frame_rate;
+					
+					if(time - last_render > _frame_rate / 4)
+						last_render = time;
 					
 					frame_buffer->is_ready_sending = true;
 					frame_buffer->is_rendered = false;
