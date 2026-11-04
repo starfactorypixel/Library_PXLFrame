@@ -1,4 +1,7 @@
+#pragma once
 #include <inttypes.h>
+
+// Полное описание формата: docs/PXL_FORMAT.md
 
 // Типы и порядок ленты.
 // Заполнить согласно актуальным типам !!!
@@ -69,11 +72,12 @@ struct __attribute__((packed)) file_header_t
 		uint8_t format_color : 4;
 	};
 	
-	// 2 байта, - Число кадров анимации, от 1 до 65535. ( по сути кол-во структур file_frame_t )
+	// 2 байта, - Число кадров анимации, от 1 до 65535. ( по сути кол-во структур file_frame_t ). 1 - статичная картинка.
 	uint16_t img_frames;
-	
-	// 1 байт, - Кол-во повторов анимации, от 0 до 255. 0 - статичная картинка, 255 - бесконечно.
-	uint8_t img_repeats;
+
+	// 1 байт, - Кол-во проигрываний анимации: 0 - бесконечно, N (1..255) - проиграть N раз и остановиться на последнем кадре.
+	// В файлах версии 2 поле называлось img_repeats (0 и 1 - один раз, 255 - бесконечно), парсер пересчитывает его при открытии.
+	uint8_t img_plays;
 	
 	// Далее идут кадры, описанные структурой file_frame_t.
 };
@@ -84,10 +88,10 @@ struct __attribute__((packed)) file_frame_t
 	// 2 байта, - Время, в мс, отображения текущего кадра, от 0 до 65535.
 	uint16_t frame_timeout;
 	
-	// 2 байта, - Число пикселей в текущем кадре. ( по сути кол-во структур file_pixel_t )
-	uint16_t frame_pixels;
-	
-	// Далее идут пиксели, описанные структурой file_pixel_t.
+	// 2 байта, - Число команд в текущем кадре (пиксель, повтор, пропуск - каждая считается за одну команду).
+	uint16_t frame_ops;
+
+	// Далее идут команды, формат которых зависит от format_color.
 };
 
 // Структура данных каждого пикселя.
@@ -121,6 +125,11 @@ struct __attribute__((packed)) file_pixel_raw_t
 
 
 
+// Результат разбора одной команды.
+// index  - первый пиксель серии. После обработки команды парсер сдвигает index на последний записанный пиксель.
+// repeat - полная длина серии, включая index. 1 - одиночный пиксель, 0 - рисовать нечего (пропуск).
+//          Перед вызовом цветового парсера всегда сбрасывается в 1.
+// color  - регистр цвета. В начале кадра {0,0,0,0}, пропуск его не меняет, повтор рисует его значение.
 struct pxl_pixel_t
 {
 	uint16_t index;
@@ -252,7 +261,7 @@ inline uint8_t parser_pack3_v2(const uint8_t *input, pxl_pixel_t &curr)
 }
 
 // ID:8, Index+RGBA
-// Формат RGBA, разностное сжатие без индекса, 4 бит/цвет формат: FRRRRGGG GBBBBAAA
+// Формат RGBA, разностное сжатие без индекса, 4/4/4/3 бит формат: FRRRRGGG GBBBBAAA
 // Индекс в несжатом виде не должен взводить старший бит, т.е. должен быть < 32768
 inline uint8_t parser_pack4_v2(const uint8_t *input, pxl_pixel_t &curr)
 {
@@ -281,8 +290,9 @@ inline uint8_t parser_pack4_v2(const uint8_t *input, pxl_pixel_t &curr)
 // ID:14, RGB
 // Формат RGB555, сжатие с потерями, 5 бит/цвет формат: FRRRRRGG GGGBBBBB
 // Индекса нет, все пиксели последовательно.
-// Если F = 1, то ипользуется сжатия повторения, формат: FMNNNNNN
-// Если M = 0, то в N указано на сколько нужно пропустить индексов
+// Если F = 1, то ипользуется сжатия повторения, формат: FMNNNNNN, count = N + 1
+// Если M = 1, то повтор: count новых пикселей цвета из регистра, начиная с index + 1
+// Если M = 0, то пропуск: count пикселей не рисуются, регистр цвета не меняется
 inline uint8_t parser_rgb5_pack(const uint8_t *input, pxl_pixel_t &curr)
 {
 	static const uint8_t expand5to8[32] = 
@@ -303,14 +313,13 @@ inline uint8_t parser_rgb5_pack(const uint8_t *input, pxl_pixel_t &curr)
 		{
 			curr.index += 1;
 			curr.repeat = count;
-			// Не реализовано
 		}
 
-		// Сжатие пропуска пикселей
+		// Сжатие пропуска пикселей: index встаёт на последний пропущенный, рисовать нечего
 		else
 		{
 			curr.index += count;
-			*(uint32_t *)curr.color = 0x00000000;
+			curr.repeat = 0;
 		}
 		
 		return 1;
@@ -329,7 +338,7 @@ inline uint8_t parser_rgb5_pack(const uint8_t *input, pxl_pixel_t &curr)
 	}
 }
 
-file_pixel_type_t file_pixel_type[] = 
+static const file_pixel_type_t file_pixel_type[] =
 {
 	{ (2 + 3), (2 + 3), parser_dummy_3 },	// RGB
 	{ (2 + 4), (2 + 4), parser_dummy_4 },	// RGBA
@@ -339,7 +348,7 @@ file_pixel_type_t file_pixel_type[] =
 	{ (0),     (0),     parser_dummy },		// ---
 	{ (0),     (0),     parser_dummy },		// ---
 	{ (2 + 3), (2),     parser_pack3_v2 },	// RGB + сжатие без индекса, 5 бит/цвет
-	{ (2 + 4), (2),     parser_pack4_v2 },	// RGBA + сжатие без индекса, 5 бит/цвет
+	{ (2 + 4), (2),     parser_pack4_v2 },	// RGBA + сжатие без индекса, 4/4/4/3 бит
 	{ (0),     (0),     parser_dummy },		// ---
 	{ (0),     (0),     parser_dummy },		// ---
 	{ (0),     (0),     parser_dummy },		// ---

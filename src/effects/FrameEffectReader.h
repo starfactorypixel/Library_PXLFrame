@@ -63,12 +63,11 @@ class FrameEffectReader : public FrameEffectInterface
 			uint32_t lasttime = HAL_GetTick();
 			Leds::obj.SetOn(Leds::LED_WHITE);
 			
-			pxl.GetAutoFrame(time, [&](const pxl_pixel_t &pxl_pixel)
+			// Парсер отдаёт только серии для отрисовки (repeat >= 1), пропуски сюда не попадают.
+			// Альфа (pxl_pixel.color[3]) пока не учитывается.
+			bool result = pxl.GetAutoFrame(time, [&](const pxl_pixel_t &pxl_pixel)
 			{
-				if(pxl_pixel.color[3] < 255)
-					return;
-				
-				color_t &pixel = *(color_t *)pxl_pixel.color;
+				const color_t &pixel = *(const color_t *)pxl_pixel.color;
 				
 				if(pxl_pixel.repeat > 1)
 					frame_buffer->SetPixel(pxl_pixel.index, pixel, pxl_pixel.repeat);
@@ -78,8 +77,9 @@ class FrameEffectReader : public FrameEffectInterface
 			
 			Leds::obj.SetOff(Leds::LED_WHITE);
 			DEBUG_LOG_TOPIC("PXLDraw", "time: %d\n", (HAL_GetTick() - lasttime));
-			
-			return true;
+
+			// false - кадр не разобран (или разобран частично), FrameManager вызовет FramePrepare повторно.
+			return result;
 		}
 		
 	private:

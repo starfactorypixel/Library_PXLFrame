@@ -8,6 +8,6 @@ class PXLReaderInterface
 		
 		virtual int8_t Open() = 0;
 		virtual int8_t Close() = 0;
-		virtual uint16_t Read(const uint32_t offset, uint16_t length = __UINT16_MAX__) = 0;
+		virtual uint32_t Read(const uint32_t offset, uint32_t length = UINT32_MAX) = 0;
 		virtual const uint8_t *GetBufferPtr() = 0;
 };

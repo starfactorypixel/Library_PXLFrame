@@ -30,7 +30,7 @@ class PXLReaderFatFS : public PXLReaderInterface
 			return result;
 		}
 		
-		virtual uint16_t Read(const uint32_t offset, uint16_t length) override
+		virtual uint32_t Read(const uint32_t offset, uint32_t length) override
 		{
 			if(_file_is_open == false) return 0;
 			
@@ -46,7 +46,7 @@ class PXLReaderFatFS : public PXLReaderInterface
 			res = f_read(&_file_obj, _buffer, length, &read_size);
 			if(res != FR_OK) return 0;
 			
-			return (uint16_t)read_size;
+			return (uint32_t)read_size;
 		}
 		
 		virtual const uint8_t *GetBufferPtr() override

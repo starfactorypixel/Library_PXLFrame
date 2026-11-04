@@ -49,12 +49,12 @@ class PXLReaderUART : public PXLReaderInterface
 			return -1;
 		}
 		
-		virtual uint16_t Read(const uint32_t offset, uint16_t length) override
+		virtual uint32_t Read(const uint32_t offset, uint32_t length) override
 		{
 			if(length > _max_data_request)
 				length = _max_data_request;
 			
-			uint16_t result = 0;
+			uint32_t result = 0;
 			uint8_t attempts = 0;
 			do
 			{

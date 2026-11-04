@@ -31,15 +31,15 @@ class PXLReaderSPI : public PXLReaderInterface
 			return 0;
 		}
 		
-		virtual uint16_t Read(const uint32_t offset, uint16_t length) override
+		virtual uint32_t Read(const uint32_t offset, uint32_t length) override
 		{
 			if(offset >= _map.spi_length) return 0;
 			if(length > sizeof(_buffer))
 				length = sizeof(_buffer);
 			
 			// Вычисляем доступное количество байт для чтения
-			uint16_t readable_length = _map.spi_length - offset;
-			uint16_t bytes_to_read = (length > readable_length) ? readable_length : length;
+			uint32_t readable_length = _map.spi_length - offset;
+			uint32_t bytes_to_read = (length > readable_length) ? readable_length : length;
 
 			// Читаем SPI
 			SPI::flash.ReadBytes( (_map.spi_start + offset), _buffer, bytes_to_read);

@@ -29,13 +29,13 @@ class PXLReaderArray : public PXLReaderInterface
 			return 0;
 		}
 		
-		virtual uint16_t Read(const uint32_t offset, uint16_t length) override
+		virtual uint32_t Read(const uint32_t offset, uint32_t length) override
 		{
 			if(offset >= _map.array_length) return 0;
 			
 			// Вычисляем доступное количество байт для чтения
-			uint16_t readable_length = _map.array_length - offset;
-			uint16_t bytes_to_read = (length > readable_length) ? readable_length : length;
+			uint32_t readable_length = _map.array_length - offset;
+			uint32_t bytes_to_read = (length > readable_length) ? readable_length : length;
 			
 			// Устанавливаем указатель на начало чтения
 			_file_ptr = &_map.array_ptr[offset];
