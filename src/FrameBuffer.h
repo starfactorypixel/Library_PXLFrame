@@ -18,19 +18,15 @@ class FrameBuffer
 			uint8_t B;
 		};
 		
-		struct __attribute__((aligned(4))) frame_buffer_t
+		struct __attribute__((__packed__)) frame_buffer_t
 		{
-			union __attribute__((aligned(4)))
+			union
 			{
 				// Массив байт кадрового буфера
 				uint8_t raw[(DISPLAY_WIDTH * DISPLAY_HEIGHT * sizeof(color_t))];
 
 				// Массив пикселей кадрового буфера
 				color_t pixels[(DISPLAY_WIDTH * DISPLAY_HEIGHT)];
-				
-				// Массив 32-битных слов кадрового буфера для Prepare(). Размер union не меняется.
-				// Байты выравнивания за последним пикселем обнуляет Clear().
-				uint32_t words[((DISPLAY_WIDTH * DISPLAY_HEIGHT * sizeof(color_t)) + 3) / 4];
 			};
 		};
 		
@@ -39,7 +35,7 @@ class FrameBuffer
 		volatile bool is_rendered = false;						// Флаг готовности кадра
 		static constexpr uint8_t frame_width = DISPLAY_WIDTH;	// Ширина кадра
 		static constexpr uint8_t frame_height = DISPLAY_HEIGHT;	// Высота кадра
-		frame_buffer_t frame_buffer;							// Массив пикселей и байт
+		frame_buffer_t frame_buffer __attribute__((aligned(4)));	// Массив пикселей и байт. Выравнивание 4 - для 32-битного DMA
 		
 		static constexpr color_t color_black = {0x00, 0x00, 0x00};
 		
@@ -95,23 +91,9 @@ class FrameBuffer
 			uint8_t scale_g = (_corr_green * _brightness) / 255;
 			uint8_t scale_b = (_corr_blue * _brightness) / 255;
 			
-			// Обработка словами по 32 бита, нулевое слово пропускается. Компоненты в словах: R G B R | G B R G | B R G B.
-			// scale[c .. c+3] - коэффициенты слова, начинающегося с компоненты c (0 - R, 1 - G, 2 - B).
-			const uint8_t scale[6] = {scale_r, scale_g, scale_b, scale_r, scale_g, scale_b};
-			uint8_t c = 0;
-			
-			for(uint32_t &word : frame_buffer.words)
+			for(color_t &pixel : frame_buffer.pixels)
 			{
-				if(word != 0)
-				{
-					uint8_t *byte = (uint8_t *)&word;
-					byte[0] = (byte[0] * scale[c + 0]) / 255;
-					byte[1] = (byte[1] * scale[c + 1]) / 255;
-					byte[2] = (byte[2] * scale[c + 2]) / 255;
-					byte[3] = (byte[3] * scale[c + 3]) / 255;
-				}
-				
-				c = (c == 2) ? 0 : c + 1;
+				AdjustBrightness(pixel, scale_r, scale_g, scale_b);
 			}
 			
 			return;
@@ -189,7 +171,9 @@ class FrameBuffer
 		
 		void AdjustBrightness(color_t &color, uint8_t scale_r, uint8_t scale_g, uint8_t scale_b)
 		{
-			if( (color.R | color.G | color.B) == 0 ) return;
+			// Проверка на чёрный одним 32-битным чтением, 4-й байт отсекается маской.
+			// У последнего пикселя буфера он приходится на байт выравнивания буфера или, если его нет, на следующее поле класса.
+			if( (((const uint32_unaligned_t *)&color)->value & 0x00FFFFFF) == 0 ) return;
 			
 			color.R = (color.R * scale_r) / 255;
 			color.G = (color.G * scale_g) / 255;
@@ -199,6 +183,12 @@ class FrameBuffer
 		}
 		
 	private:
+		
+		// Невыровненное 32-битное чтение: компилятор знает о невыровненности, may_alias - допустимо читать любой тип.
+		struct __attribute__((packed, may_alias)) uint32_unaligned_t
+		{
+			uint32_t value;
+		};
 		
 		uint8_t _brightness;
 		uint8_t _corr_red;
