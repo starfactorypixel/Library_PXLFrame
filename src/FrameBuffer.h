@@ -27,6 +27,10 @@ class FrameBuffer
 
 				// Массив пикселей кадрового буфера
 				color_t pixels[(DISPLAY_WIDTH * DISPLAY_HEIGHT)];
+				
+				// Массив 32-битных слов кадрового буфера для Prepare(). Размер union не меняется.
+				// Байты выравнивания за последним пикселем обнуляет Clear().
+				uint32_t words[((DISPLAY_WIDTH * DISPLAY_HEIGHT * sizeof(color_t)) + 3) / 4];
 			};
 		};
 		
@@ -40,7 +44,7 @@ class FrameBuffer
 		static constexpr color_t color_black = {0x00, 0x00, 0x00};
 		
 		
-		FrameBuffer() : _brightness(127), _corr_red(255), _corr_greed(255), _corr_blue(255)
+		FrameBuffer() : _brightness(127), _corr_red(255), _corr_green(255), _corr_blue(255)
 		{}
 		
 		
@@ -78,21 +82,36 @@ class FrameBuffer
 		void SetColorCorrection(uint8_t red, uint8_t green, uint8_t blue)
 		{
 			_corr_red = red;
-			_corr_greed = green;
+			_corr_green = green;
 			_corr_blue = blue;
 			
 			return;
 		}
 		
+		// Применяет яркость и коррекцию цвета прямо в буфере: перед каждым выводом кадр нужно рисовать заново.
 		void Prepare()
 		{
 			uint8_t scale_r = (_corr_red * _brightness) / 255;
-			uint8_t scale_g = (_corr_greed * _brightness) / 255;
+			uint8_t scale_g = (_corr_green * _brightness) / 255;
 			uint8_t scale_b = (_corr_blue * _brightness) / 255;
 			
-			for(color_t &pixel : frame_buffer.pixels)
+			// Обработка словами по 32 бита, нулевое слово пропускается. Компоненты в словах: R G B R | G B R G | B R G B.
+			// scale[c .. c+3] - коэффициенты слова, начинающегося с компоненты c (0 - R, 1 - G, 2 - B).
+			const uint8_t scale[6] = {scale_r, scale_g, scale_b, scale_r, scale_g, scale_b};
+			uint8_t c = 0;
+			
+			for(uint32_t &word : frame_buffer.words)
 			{
-				AdjustBrightness(pixel, scale_r, scale_g, scale_b);
+				if(word != 0)
+				{
+					uint8_t *byte = (uint8_t *)&word;
+					byte[0] = (byte[0] * scale[c + 0]) / 255;
+					byte[1] = (byte[1] * scale[c + 1]) / 255;
+					byte[2] = (byte[2] * scale[c + 2]) / 255;
+					byte[3] = (byte[3] * scale[c + 3]) / 255;
+				}
+				
+				c = (c == 2) ? 0 : c + 1;
 			}
 			
 			return;
@@ -142,7 +161,11 @@ class FrameBuffer
 		
 		void SetPixel(uint16_t idx, const color_t &pixel, uint16_t count)
 		{
-			if(idx + count > sizeofarray(frame_buffer.pixels)) return;
+			if(idx >= sizeofarray(frame_buffer.pixels)) return;
+			
+			// Серия, выходящая за буфер, обрезается по его концу
+			if(idx + count > sizeofarray(frame_buffer.pixels))
+				count = sizeofarray(frame_buffer.pixels) - idx;
 			
 			memcpy_repeat_fast( (uint8_t *)&frame_buffer.pixels[idx], (uint8_t *)&pixel, sizeof(pixel), count );
 			
@@ -166,7 +189,7 @@ class FrameBuffer
 		
 		void AdjustBrightness(color_t &color, uint8_t scale_r, uint8_t scale_g, uint8_t scale_b)
 		{
-			if( (*(uint32_t*)&color & 0x00FFFFFF) == 0 ) return;
+			if( (color.R | color.G | color.B) == 0 ) return;
 			
 			color.R = (color.R * scale_r) / 255;
 			color.G = (color.G * scale_g) / 255;
@@ -179,7 +202,7 @@ class FrameBuffer
 		
 		uint8_t _brightness;
 		uint8_t _corr_red;
-		uint8_t _corr_greed;
+		uint8_t _corr_green;
 		uint8_t _corr_blue;
 
 };
