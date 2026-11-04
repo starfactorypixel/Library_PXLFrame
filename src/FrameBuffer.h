@@ -28,7 +28,12 @@ class FrameBuffer
 				// Массив пикселей кадрового буфера
 				color_t pixels[(DISPLAY_WIDTH * DISPLAY_HEIGHT)];
 			};
+			
+			// Добивка до кратного 4 размера, 1..4 байта: за последним пикселем всегда есть хотя бы один байт буфера
+			uint8_t _fill[4 - ((DISPLAY_WIDTH * DISPLAY_HEIGHT * sizeof(color_t)) % 4)];
 		};
+		
+		static_assert(sizeof(frame_buffer_t) % 4 == 0, "frame_buffer_t size must be a multiple of 4");
 		
 		volatile bool is_sending = false;						// Флаг активной отправки данных на экран
 		volatile bool is_ready_sending = false;					// Флаг готовности отправки данных на экран
@@ -172,7 +177,7 @@ class FrameBuffer
 		void AdjustBrightness(color_t &color, uint8_t scale_r, uint8_t scale_g, uint8_t scale_b)
 		{
 			// Проверка на чёрный одним 32-битным чтением, 4-й байт отсекается маской.
-			// У последнего пикселя буфера он приходится на байт выравнивания буфера или, если его нет, на следующее поле класса.
+			// У последнего пикселя буфера он приходится на _fill.
 			if( (((const uint32_unaligned_t *)&color)->value & 0x00FFFFFF) == 0 ) return;
 			
 			color.R = (color.R * scale_r) / 255;
