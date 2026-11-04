@@ -78,7 +78,7 @@ class FrameEffectReader : public FrameEffectInterface
 			Leds::obj.SetOff(Leds::LED_WHITE);
 			DEBUG_LOG_TOPIC("PXLDraw", "time: %d\n", (HAL_GetTick() - lasttime));
 
-			// false - кадр не разобран (или разобран частично), FrameManager вызовет FramePrepare повторно.
+			// false - кадр не разобран, FramePrepare будет вызван повторно.
 			return result;
 		}
 		
